@@ -28,7 +28,7 @@ public class Service {
             System.out.println("4. Show me which books I borrowed");
             System.out.println("5. Borrow a book");
             System.out.println("6. Return a book");
-            System.out.println("7. Show me the books I have already read");
+            System.out.println("7. Change password");
             System.out.println("8. Donate a book");
             System.out.println("9. Log Out");
             System.out.println("10. Exit");
@@ -60,13 +60,13 @@ public class Service {
                     library.show_books();
                     break;
                 case 2:
-                    Author.show_authors(library);
+                    Author.show_authors();
                     break;
                 case 3:
                     library.fav_section(user_id);
                     break;
                 case 4:
-                    BookLoan.show_borrowed_books(library.get_book_loans(), user_id);
+                    BookLoan.show_borrowed_books(user_id);
                     break;
                 case 5:
                     library.borrow_book(user_id);
@@ -75,7 +75,7 @@ public class Service {
                     library.return_book(user_id);
                     break;
                 case 7:
-                    library.get_reader(user_id).show_already_read(library.get_books());
+                    Reader.change_password(user_id);
                     break;
                 case 8:
                     library.add_book();

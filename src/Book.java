@@ -1,86 +1,113 @@
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 
 public class Book {
-    private static int last_id = 0;
     private int id;
     private String title;
-    private Author author;
+    private int author;
     private int pages;
-    private Section section;
+    private int section;
     private int year;
 
-    // Constructors
+    // Constructor
 
-    public Book(String title, int pages, int year, Author author, Section section) {
+    public Book(String title, int pages, int year, int author,  int section) {
         this.title = title;
         this.pages = pages;
         this.year = year;
         this.author = author;
         this.section = section;
-        this.id = ++last_id;
+
+        DatabaseService databaseService = DatabaseService.getInstance();
+        this.id = databaseService.get_all_books() + 1;
+        databaseService.create_book(this.id, this.title, this.pages, this.year, this.author, this.section);
+
     }
 
-    // Getters
+    // returns the title of a book based on books's id
 
-    public Author get_author()
+    static public String get_title_by_id(int id_)
     {
-        return author;
-    }
+        String query = "SELECT * FROM books WHERE id = ?";
+        DatabaseService databaseService = DatabaseService.getInstance();
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
 
-    public Section get_section()
-    {
-        return section;
-    }
+        try {
+            connection = databaseService.getConnection();
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setInt(1, id_);
+            resultSet = preparedStatement.executeQuery();
 
-    public int get_id()
-    {
-        return id;
-    }
-
-    public String get_title()
-    {
-        return title;
-    }
-
-    // Static methods
-
-    // Returns a book based on an id.
-
-    public static Book get_book(Library library, int id)
-    {
-        for (Book book : library.get_books())
-        {
-            if(book.get_id() == id)
-            {
-                return book;
+            if (resultSet.next()) {
+                String title = resultSet.getString("title");
+                return title;
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        return null;
+        return "";
     }
 
-    // Returns a book based on a title.
+    // returns the id of the book based on the book's title
 
-    public static Book get_book(Library library, String title)
+    public static int get_book(String title)
     {
-        for (Book book : library.get_books())
-        {
-            if(Objects.equals(book.get_title(), title))
+        String query = "SELECT * FROM books WHERE title = ?";
+        DatabaseService databaseService = DatabaseService.getInstance();
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            connection = databaseService.getConnection();
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, title);
+            resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next())
             {
-                return book;
+                int id_ = resultSet.getInt("id");
+                return id_;
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        return null;
+        return -1;
     }
 
-    // A function that shows all books of the library.
+    // shows all books from the database
 
-    public static void show_all_books(Library library)
+    public static void show_all_books()
     {
-        List<Book> books = library.get_books();
-        for(Book book : books)
-        {
-            System.out.println(book);
+        String query = "SELECT * FROM books";
+        DatabaseService databaseService = DatabaseService.getInstance();
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            connection = databaseService.getConnection();
+            preparedStatement = connection.prepareStatement(query);
+            resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                String title = resultSet.getString("title");
+                int author_ = resultSet.getInt("author");
+                int person_id = Author.getPersonByAuthorId(author_);
+                String name_ = Person.getName(person_id);
+                int pages_ = resultSet.getInt("pages");
+                int year_ = resultSet.getInt("year");
+
+                System.out.println(title + " - " + author_ + " (" + year_ + "," + pages_ + " pages)");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 

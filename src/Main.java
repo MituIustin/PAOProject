@@ -1,10 +1,14 @@
+import java.sql.*;
+
 public class Main {
     public static void main(String[] args) {
 
-        // Basic logic for the application
-
+        DatabaseService databaseService = DatabaseService.getInstance();
         int user = 0;
         Service service = new Service();
+
+        // basic logic for the login system
+
         while (user != -1)
         {
             int command = service.show_services(user);

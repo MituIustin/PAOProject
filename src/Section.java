@@ -1,56 +1,78 @@
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class Section {
     private String name;
+    private int id;
 
-    // Constructors
+    // Constructor
 
     public Section(String name) {
         this.name = name;
+        this.id = id;
+        DatabaseService databaseService = DatabaseService.getInstance();
+        this.id = databaseService.get_all_sections() + 1;
+        databaseService.create_section(this.id, this.name);
     }
 
-    // Getters
+    // return section's id based on the name
 
-    public String get_name() {
-        return name;
-    }
-
-    // Returns the number of apparitions in the book list
-
-    public int get_frequency(List<Book> books, Reader user)
+    static public int getSectionByName(String name_)
     {
-        Set<Integer> read_books = user.get_books_id();
-        int count = 0;
-        for(Book book : books)
-        {
-            if(read_books.contains(book.get_id()))
-            {
-                if (book.get_section() == this)
+        String query = "SELECT * FROM sections WHERE name = ?";
+        DatabaseService databaseService = DatabaseService.getInstance();
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            connection = databaseService.getConnection();
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, name_);
+            resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                int id_ = resultSet.getInt("id");
+                return id_;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    // returns a book's section
+
+    static public String getSectionByBookId(int bookId)
+    {
+        String query = "SELECT * FROM books WHERE id = ?";
+        DatabaseService databaseService = DatabaseService.getInstance();
+        try {
+            Connection connection = databaseService.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setInt(1, bookId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                int section_ = resultSet.getInt("section");
+
+                query = "SELECT * FROM sections WHERE id = ?";
+                preparedStatement = connection.prepareStatement(query);
+                preparedStatement.setInt(1, section_);
+                resultSet = preparedStatement.executeQuery();
+                if (resultSet.next())
                 {
-                    count++;
+                    String sec_name = resultSet.getString("name");
+                    return sec_name;
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        return count;
-    }
+        return "";
 
-    // Static methods
-
-    // It returns a section based on its name, or creates a new one
-
-    public static Section get_section(Library library, String section_name)
-    {
-        for (Section section : library.get_sections())
-        {
-            if(Objects.equals(section.get_name(), section_name))
-            {
-                return section;
-            }
-        }
-        System.out.println("It seems that this section does not exists, let's add it!");
-        return new Section(section_name);
     }
 
     @Override

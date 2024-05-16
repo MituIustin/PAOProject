@@ -1,50 +1,66 @@
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class BookLoan {
-    private static int last_id = 0;
     private int id;
-    private Book book;
-    private Reader reader;
+    private int book;
+    private int reader;
 
-    // Constructors
+    // Constructor
 
-    public BookLoan(Book book, Reader reader){
+    public BookLoan(int book, int reader){
         this.book = book;
         this.reader = reader;
-        this.id = ++last_id;
+        DatabaseService databaseService = DatabaseService.getInstance();
+        this.id = databaseService.get_all_bookloans() + 1;
+        databaseService.create_bookloan(book, reader);
     }
 
-    // Getters
+    // returns a list of books ids
 
-    public Reader get_reader()
+    static public List<Integer> getBooksByReaderId(int readerId)
     {
-        return this.reader;
-    }
+        String query = "SELECT * FROM bookloan";
+        DatabaseService databaseService = DatabaseService.getInstance();
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        List<Integer> bookIds = new ArrayList<>();
+        try {
+            connection = databaseService.getConnection();
+            preparedStatement = connection.prepareStatement(query);
+            resultSet = preparedStatement.executeQuery();
 
-    public Book get_book()
-    {
-        return this.book;
-    }
+            while (resultSet.next()) {
 
-    // Static methods
+                int reader_ = resultSet.getInt("reader");
+                int book_ = resultSet.getInt("book");
+                if(reader_ == readerId)
+                {
 
-    // This function takes a user and finds all the books that he's currently has.
-
-    public static void show_borrowed_books(List<BookLoan> loans, int user_id)
-    {
-        for(BookLoan loan : loans)
-        {
-            if(loan.get_reader().get_id() == user_id)
-            {
-                System.out.println(loan);
+                    bookIds.add(book_);
+                }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        return bookIds;
     }
 
-    @Override
-    public String toString()
+    // shows all books that a reader borrowed
+
+    public static void show_borrowed_books(int user_id)
     {
-        return this.reader.toString() + "borrowed " + this.book.toString();
+        List<Integer> books_id = getBooksByReaderId(user_id);
+        for(Integer bookid : books_id)
+        {
+            String title = Book.get_title_by_id(bookid);
+            System.out.println(title);
+        }
     }
 
 }
